@@ -9,8 +9,11 @@ import {
   Image,
   Dimensions,
   TextInput,
+  TouchableWithoutFeedback,
 } from 'react-native';
 import {Movies, MoviesData} from './types';
+import {useNavigation} from '@react-navigation/native';
+import {GlobalNavigationProp} from '../navigations/navigator';
 
 const {width} = Dimensions.get('window');
 const CARD_WIDTH = (width - 48) / 2;
@@ -33,6 +36,8 @@ export const HomePage = () => {
   const [filteredMovieList, setFilteredMovieList] = useState<MoviesData>();
   const [isLoading, setIsLoading] = useState(false);
   const [inputText, setInputText] = useState('');
+
+  const navigation = useNavigation<GlobalNavigationProp>();
 
   const fetchMovies = async () => {
     setIsLoading(true);
@@ -71,9 +76,37 @@ export const HomePage = () => {
     fetchMovies();
   }, []);
 
+  const buttons = [
+    {
+      title: 'Accordian',
+      navigateTo: 'Accordian',
+    },
+    {
+      title: 'ToDo List',
+      navigateTo: 'ToDoList',
+    },
+    {
+      title: 'Location',
+      navigateTo: 'Location',
+    },
+  ];
+
   return (
     <View style={styles.container}>
       <Text style={styles.heading}>Movies List</Text>
+      <View style={styles.buttonContainer}>
+        {buttons.map(btn => (
+          <TouchableWithoutFeedback
+            key={btn.title}
+            onPress={() => {
+              navigation.navigate(btn.navigateTo as any);
+            }}>
+            <View style={styles.buttonNav}>
+              <Text style={{color: 'white'}}>{btn.title}</Text>
+            </View>
+          </TouchableWithoutFeedback>
+        ))}
+      </View>
 
       {/* text input */}
       <View style={styles.inputText}>
@@ -113,6 +146,11 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingTop: 20,
     backgroundColor: 'white',
+  },
+  buttonContainer: {
+    padding: 10,
+    flexDirection: 'row',
+    justifyContent: 'space-around',
   },
   heading: {
     color: 'red',
@@ -157,5 +195,13 @@ const styles = StyleSheet.create({
     borderRadius: 15,
     outlineWidth: 0,
     marginBottom: 20,
+  },
+  buttonNav: {
+    backgroundColor: 'blue',
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
