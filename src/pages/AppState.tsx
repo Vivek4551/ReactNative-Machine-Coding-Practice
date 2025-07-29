@@ -1,36 +1,41 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import React, {useEffect, useRef, useState, useCallback} from 'react';
 import {AppState, View, Text, StyleSheet, AppStateStatus} from 'react-native';
-import axios, {CancelTokenSource} from 'axios';
+import axios from 'axios';
 
 export const AppStateComponent = () => {
   const [data, setData] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const appStateRef = useRef<AppStateStatus>(AppState.currentState);
-  const cancelTokenRef = useRef<CancelTokenSource | null>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
-  const delayedGet = (url: string, config: any) =>
+  const delayedGet = (url: string, signal: AbortSignal) =>
     new Promise((resolve, reject) => {
-      setTimeout(() => {
-        axios.get(url, config).then(resolve).catch(reject);
+      const timeout = setTimeout(() => {
+        axios.get(url, {signal}).then(resolve).catch(reject);
       }, 3000);
+
+      // In case the fetch is aborted before timeout
+      signal.addEventListener('abort', () => {
+        clearTimeout(timeout);
+        reject(new DOMException('Aborted due to app state change', 'AbortError'));
+      });
     });
 
   const fetchData = useCallback(async () => {
-    cancelTokenRef.current = axios.CancelToken.source();
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
     setIsLoading(true);
     try {
       const response: any = await delayedGet(
         'https://jsonplaceholder.typicode.com/posts',
-        {
-          cancelToken: cancelTokenRef.current.token,
-        },
+        controller.signal,
       );
       console.log('again called');
       setData(response.data);
     } catch (error: any) {
-      if (axios.isCancel(error)) {
-        console.log('Request canceled:', error.message);
+      if (error.name === 'AbortError') {
+        console.log('Request aborted:', error.message);
       } else {
         console.error('API error:', error);
       }
@@ -40,8 +45,8 @@ export const AppStateComponent = () => {
   }, []);
 
   const cancelRequest = () => {
-    if (cancelTokenRef.current) {
-      cancelTokenRef.current.cancel('Cancelled due to app going to background');
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
     }
   };
 
