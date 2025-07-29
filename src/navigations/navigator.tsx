@@ -1,16 +1,24 @@
 import React from 'react';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import {StackNavigationProp} from '@react-navigation/stack';
-import {Location} from '../pages/Location';
 import {Accordion} from '../pages/Accordian';
 import {HomePage} from '../pages/HomePage';
 import {ToDoList} from '../pages/ToDoList';
+import {JobBoard} from '../pages/JobBoard';
+import {AutoComplete} from '../pages/AutoComplete';
+import {Location} from '../pages/Location';
+import {MovieList} from '../pages/MovieList';
+import {AppStateComponent} from '../pages/AppState';
 
 export type RootStackParamList = {
   Location: undefined;
   Accordian: undefined;
   HomePage: undefined;
   ToDoList: undefined;
+  JobBoard: undefined;
+  AutoComplete: undefined;
+  MovieList: undefined;
+  AppStateComponent: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -47,9 +55,49 @@ export const AppNavigator = () => {
       />
 
       <Stack.Screen
+        name="JobBoard"
+        component={JobBoard}
+        options={{
+          headerShown: true,
+          animation: 'fade_from_bottom',
+          headerBackVisible: true,
+        }}
+      />
+
+      <Stack.Screen
+        name="AutoComplete"
+        component={AutoComplete}
+        options={{
+          headerShown: true,
+          animation: 'fade_from_bottom',
+          headerBackVisible: true,
+        }}
+      />
+
+      <Stack.Screen
+        name="MovieList"
+        component={MovieList}
+        options={{
+          headerShown: true,
+          animation: 'fade_from_bottom',
+          headerBackVisible: true,
+        }}
+      />
+
+      <Stack.Screen
+        name="AppStateComponent"
+        component={AppStateComponent}
+        options={{
+          headerShown: true,
+          animation: 'fade_from_bottom',
+          headerBackVisible: true,
+        }}
+      />
+
+      <Stack.Screen
         name="ToDoList"
         component={ToDoList}
-        // options={{headerShown: false, animation: 'fade_from_bottom'}}
+        options={{headerShown: true, animation: 'fade_from_bottom'}}
       />
     </Stack.Navigator>
   );

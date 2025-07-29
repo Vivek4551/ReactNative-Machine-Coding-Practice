@@ -1,7 +1,7 @@
 import React from 'react';
 import {FlatList, View} from 'react-native';
 import {Place} from '../MockedData/mockData';
-import {PlaceComponent} from './Place';
+import {PlaceComponent} from '../pages/Place';
 
 interface props {
   data: Place[];

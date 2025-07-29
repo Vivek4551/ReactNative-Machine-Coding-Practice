@@ -9,7 +9,7 @@ import {
   TouchableHighlight,
   View,
 } from 'react-native';
-import {TODO} from './types';
+import {TODO} from '../constants/types';
 
 const RenderListUI = ({
   item,
