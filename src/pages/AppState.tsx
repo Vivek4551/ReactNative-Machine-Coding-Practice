@@ -23,7 +23,6 @@ export const AppStateComponent = () => {
   };
 
   useEffect(() => {
-    // Start counter on mount if app is active
     if (appState.current === 'active') {
       startCounter();
     }
@@ -34,17 +33,17 @@ export const AppStateComponent = () => {
         nextAppState === 'active'
       ) {
         console.log('App has come to the foreground!');
-        startCounter(); // resume counter
+        startCounter();
       } else if (nextAppState.match(/inactive|background/)) {
         console.log('App has gone to the background!');
-        stopCounter(); // pause counter
+        stopCounter();
       }
       appState.current = nextAppState;
     });
 
     return () => {
       subscription.remove();
-      stopCounter(); // cleanup on unmount
+      stopCounter();
     };
   }, []);
 
