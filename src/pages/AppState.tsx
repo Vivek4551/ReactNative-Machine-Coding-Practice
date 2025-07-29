@@ -1,66 +1,95 @@
-import {AppState, View, Text, StyleSheet} from 'react-native';
-import React, {useEffect, useRef, useState} from 'react';
+/* eslint-disable react-hooks/exhaustive-deps */
+import React, {useEffect, useRef, useState, useCallback} from 'react';
+import {AppState, View, Text, StyleSheet, AppStateStatus} from 'react-native';
+import axios, {CancelTokenSource} from 'axios';
 
 export const AppStateComponent = () => {
-  const [counter, setCounter] = useState(0);
-  const timer = useRef<NodeJS.Timeout | null>(null);
+  const [data, setData] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const appStateRef = useRef<AppStateStatus>(AppState.currentState);
+  const cancelTokenRef = useRef<CancelTokenSource | null>(null);
 
-  const appState = useRef(AppState.currentState);
+  const delayedGet = (url: string, config: any) =>
+    new Promise((resolve, reject) => {
+      setTimeout(() => {
+        axios.get(url, config).then(resolve).catch(reject);
+      }, 3000);
+    });
 
-  const startCounter = () => {
-    if (timer.current === null) {
-      timer.current = setInterval(() => {
-        setCounter(prev => prev + 1);
-      }, 1000);
+  const fetchData = useCallback(async () => {
+    cancelTokenRef.current = axios.CancelToken.source();
+    setIsLoading(true);
+    try {
+      const response: any = await delayedGet(
+        'https://jsonplaceholder.typicode.com/posts',
+        {
+          cancelToken: cancelTokenRef.current.token,
+        },
+      );
+      console.log('again called');
+      setData(response.data);
+    } catch (error: any) {
+      if (axios.isCancel(error)) {
+        console.log('Request canceled:', error.message);
+      } else {
+        console.error('API error:', error);
+      }
+    } finally {
+      setIsLoading(false);
     }
-  };
+  }, []);
 
-  const stopCounter = () => {
-    if (timer.current !== null) {
-      clearInterval(timer.current);
-      timer.current = null;
+  const cancelRequest = () => {
+    if (cancelTokenRef.current) {
+      cancelTokenRef.current.cancel('Cancelled due to app going to background');
     }
   };
 
   useEffect(() => {
-    if (appState.current === 'active') {
-      startCounter();
-    }
+    fetchData();
 
     const subscription = AppState.addEventListener('change', nextAppState => {
+      const prevAppState = appStateRef.current;
+
       if (
-        appState.current.match(/inactive|background/) &&
+        prevAppState.match(/active/) &&
+        nextAppState.match(/inactive|background/)
+      ) {
+        console.log('App going to background, cancelling API...');
+        cancelRequest();
+      }
+
+      if (
+        prevAppState.match(/inactive|background/) &&
         nextAppState === 'active'
       ) {
-        console.log('App has come to the foreground!');
-        startCounter();
-      } else if (nextAppState.match(/inactive|background/)) {
-        console.log('App has gone to the background!');
-        stopCounter();
+        console.log('App came to foreground, restarting API...');
+        fetchData();
       }
-      appState.current = nextAppState;
+
+      appStateRef.current = nextAppState;
     });
 
     return () => {
       subscription.remove();
-      stopCounter();
+      cancelRequest();
     };
   }, []);
 
   return (
     <View style={styles.container}>
-      <Text style={styles.counterText}>Counter: {counter}</Text>
+      <Text style={styles.text}>
+        {isLoading
+          ? 'Fetching or waiting'
+          : data
+          ? 'Data fetched successfully'
+          : 'No data found'}
+      </Text>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  counterText: {
-    fontSize: 24,
-  },
+  container: {flex: 1, justifyContent: 'center', alignItems: 'center'},
+  text: {fontSize: 18, padding: 20},
 });
